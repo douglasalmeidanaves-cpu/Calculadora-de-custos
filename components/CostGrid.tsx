@@ -44,12 +44,15 @@ const CostGrid: React.FC<CostGridProps> = ({ data }) => {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
       {items.map((item, index) => {
         const Icon = item.icon;
+        // Fix TS error: Property 'highlight' does not exist on some union members.
+        const isHighlighted = (item as any).highlight;
+        
         return (
           <div 
             key={index} 
             className={`
               relative p-4 rounded-xl border transition-all duration-300 hover:shadow-lg
-              ${item.highlight ? 'bg-white border-blue-200 shadow-md col-span-1 md:col-span-1 lg:col-span-1 ring-1 ring-blue-100' : 'bg-white border-slate-100'}
+              ${isHighlighted ? 'bg-white border-blue-200 shadow-md col-span-1 md:col-span-1 lg:col-span-1 ring-1 ring-blue-100' : 'bg-white border-slate-100'}
             `}
           >
             <div className="flex items-start justify-between mb-3">
