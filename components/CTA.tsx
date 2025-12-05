@@ -26,8 +26,9 @@ const CTA: React.FC<CTAProps> = ({ text }) => {
         
         <div className="flex-shrink-0 mt-2 md:mt-0">
           <a 
-            href="#" 
-            onClick={(e) => e.preventDefault()}
+            href="https://vistoriadoronline.com.br" 
+            target="_blank"
+            rel="noopener noreferrer"
             className="group flex items-center justify-center gap-2 bg-white text-emerald-700 px-6 py-2.5 rounded-lg font-bold hover:bg-blue-50 transition shadow-lg hover:shadow-xl text-sm whitespace-nowrap uppercase tracking-wide"
           >
             Consultar Placa Agora
