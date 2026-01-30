@@ -1,4 +1,3 @@
-
 import { VehicleReport, CarRecommendation, InsuranceQuote, BlogPost, TechSpecs, ResaleReport, GroundingSource, FipeReport } from "../types";
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 
@@ -33,10 +32,7 @@ const extractSources = (response: GenerateContentResponse): GroundingSource[] =>
 const MAIN_MODEL = 'gemini-3-flash-preview';
 
 export const analyzeVehicle = async (userInput: string): Promise<VehicleReport> => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) throw new Error("API_KEY não configurada.");
-  
-  const ai = new GoogleGenAI({ apiKey: apiKey as string });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: MAIN_MODEL,
     contents: `Análise técnica e custos para: ${userInput} no Brasil. Retorne JSON VehicleReport.`,
@@ -52,10 +48,7 @@ export const analyzeVehicle = async (userInput: string): Promise<VehicleReport> 
 };
 
 export const calculateInsurance = async (model: string, year: number): Promise<InsuranceQuote> => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) throw new Error("API_KEY não configurada.");
-
-  const ai = new GoogleGenAI({ apiKey: apiKey as string });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: MAIN_MODEL,
     contents: `Estimativa de seguro: ${model} ${year}. Retorne JSON InsuranceQuote.`,
@@ -71,10 +64,7 @@ export const calculateInsurance = async (model: string, year: number): Promise<I
 };
 
 export const getRecommendations = async (budget: number, category: string): Promise<CarRecommendation[]> => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) throw new Error("API_KEY não configurada.");
-
-  const ai = new GoogleGenAI({ apiKey: apiKey as string });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: MAIN_MODEL,
     contents: `Melhores carros até R$ ${budget} categoria ${category}. Retorne ARRAY CarRecommendation.`,
@@ -90,10 +80,7 @@ export const getRecommendations = async (budget: number, category: string): Prom
 };
 
 export const getCarSpecs = async (model: string): Promise<TechSpecs> => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) throw new Error("API_KEY não configurada.");
-
-  const ai = new GoogleGenAI({ apiKey: apiKey as string });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: MAIN_MODEL,
     contents: `Ficha técnica: ${model}. Retorne JSON TechSpecs.`,
@@ -109,10 +96,7 @@ export const getCarSpecs = async (model: string): Promise<TechSpecs> => {
 };
 
 export const analyzeResale = async (modelInput: string): Promise<ResaleReport> => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) throw new Error("API_KEY não configurada.");
-
-  const ai = new GoogleGenAI({ apiKey: apiKey as string });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: MAIN_MODEL,
     contents: `Análise de revenda: ${modelInput}. Retorne JSON ResaleReport.`,
@@ -128,10 +112,7 @@ export const analyzeResale = async (modelInput: string): Promise<ResaleReport> =
 };
 
 export const getFipeReport = async (model: string, year: number): Promise<FipeReport> => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) throw new Error("API_KEY não configurada.");
-
-  const ai = new GoogleGenAI({ apiKey: apiKey as string });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: MAIN_MODEL,
     contents: `Análise de preço Fipe e Mercado para ${model} ano ${year}. Retorne JSON FipeReport.`,
@@ -147,10 +128,7 @@ export const getFipeReport = async (model: string, year: number): Promise<FipeRe
 };
 
 export const getBlogPosts = async (): Promise<BlogPost[]> => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) throw new Error("API_KEY não configurada.");
-
-  const ai = new GoogleGenAI({ apiKey: apiKey as string });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: MAIN_MODEL,
     contents: `Busque as 3 notícias automotivas mais RECENTES do Brasil. Retorne ARRAY de JSON BlogPost.`,
@@ -164,10 +142,7 @@ export const getBlogPosts = async (): Promise<BlogPost[]> => {
 };
 
 export const getMotivationalMessage = async (msg: string): Promise<string> => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) throw new Error("API_KEY não configurada.");
-
-  const ai = new GoogleGenAI({ apiKey: apiKey as string });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: MAIN_MODEL,
     contents: `Mensagem motivadora para: "${msg}"`,
