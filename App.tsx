@@ -1,94 +1,340 @@
-import React, { useState } from 'react';
-import { analyzeVehicle } from './services/geminiService';
-import { VehicleReport } from './types';
+
+import React, { useState, useEffect } from 'react';
+import { analyzeVehicle, getRecommendations, calculateInsurance, getMotivationalMessage, getCarSpecs, analyzeResale, getFipeReport } from './services/geminiService';
+import { VehicleReport, CarRecommendation, InsuranceQuote, AppView, TechSpecs, ResaleReport, FipeReport } from './types';
 import Hero from './components/Hero';
 import CostGrid from './components/CostGrid';
 import AnalysisSection from './components/AnalysisSection';
+import CommonIssues from './components/CommonIssues';
 import CTA from './components/CTA';
-import { CheckCircle2, Clock, Car } from 'lucide-react';
+import MarketComparison from './components/MarketComparison';
+import InsuranceEstimator from './components/InsuranceEstimator';
+import MotivationChat from './components/MotivationChat';
+import AffiliatePage from './components/AffiliatePage';
+import BlogPage from './components/BlogPage';
+import FloatingCTA from './components/FloatingCTA';
+import TechnicalSpecs from './components/TechnicalSpecs';
+import ResaleAnalysis from './components/ResaleAnalysis';
+import FipeTable from './components/FipeTable';
+// Fixed missing Car icon import
+import { CheckCircle2, Clock, Key, AlertCircle, Shield, MapPin, Phone, Instagram, Youtube, Mail, Car } from 'lucide-react';
 
 const App: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsApiKey, setNeedsApiKey] = useState(false);
+  
+  const [currentView, setCurrentView] = useState<AppView>('home');
+  const [history, setHistory] = useState<AppView[]>([]);
   const [report, setReport] = useState<VehicleReport | null>(null);
+  const [recommendations, setRecommendations] = useState<CarRecommendation[]>([]);
+  const [hasComparisonSearched, setHasComparisonSearched] = useState(false);
+  const [insuranceQuote, setInsuranceQuote] = useState<InsuranceQuote | null>(null);
+  const [techSpecs, setTechSpecs] = useState<TechSpecs | null>(null);
+  const [resaleReport, setResaleReport] = useState<ResaleReport | null>(null);
+  const [fipeReport, setFipeReport] = useState<FipeReport | null>(null);
+  const [lastUserMessage, setLastUserMessage] = useState('');
+  const [chatResponse, setChatResponse] = useState('');
+  const [hasInteractedWithChat, setHasInteractedWithChat] = useState(false);
+
+  useEffect(() => {
+    const checkKey = async () => {
+      if (typeof window.aistudio !== 'undefined' && window.aistudio) {
+        const hasKey = await window.aistudio.hasSelectedApiKey();
+        setNeedsApiKey(!hasKey);
+      }
+    };
+    checkKey();
+  }, []);
+
+  const handleServiceError = async (err: any) => {
+    if (err.message === "API_KEY_MISSING" || err.message === "API_KEY_INVALID") {
+      setNeedsApiKey(true);
+      setError("Conexão com Inteligência Artificial pendente.");
+      if (typeof window.aistudio !== 'undefined' && window.aistudio) {
+        await window.aistudio.openSelectKey();
+      }
+    } else {
+      setError("Ops! Erro na pesquisa. Tente novamente.");
+    }
+  };
+
+  const handleSelectKey = async () => {
+    if (typeof window.aistudio !== 'undefined' && window.aistudio) {
+      await window.aistudio.openSelectKey();
+      setNeedsApiKey(false);
+      setError(null);
+    }
+  };
+
+  const handleViewChange = (newView: AppView) => {
+    if (newView === currentView) return;
+    setHistory(prev => [...prev, currentView]);
+    setCurrentView(newView);
+    setError(null);
+  };
+
+  const handleBack = () => {
+    if (history.length === 0) return;
+    const previousView = history[history.length - 1];
+    setHistory(prev => prev.slice(0, -1));
+    setCurrentView(previousView);
+    setError(null);
+  };
 
   const handleSearch = async (term: string) => {
     setLoading(true);
     setError(null);
-    setReport(null); // Clear previous result while loading
-
     try {
       const data = await analyzeVehicle(term);
       setReport(data);
+      setCurrentView('calculator');
     } catch (err) {
-      setError("Não foi possível realizar a análise. Verifique sua conexão e tente novamente.");
-      console.error(err);
+      await handleServiceError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleComparisonSearch = async (budget: number, category: 'hatch' | 'sedan' | 'suv') => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getRecommendations(budget, category);
+      setRecommendations(data);
+      setHasComparisonSearched(true);
+      setCurrentView('comparison');
+    } catch (err) {
+      await handleServiceError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInsuranceSearch = async (model: string, year: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await calculateInsurance(model, year);
+      setInsuranceQuote(data);
+      setCurrentView('insurance');
+    } catch (err) {
+      await handleServiceError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSpecsSearch = async (model: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getCarSpecs(model);
+      setTechSpecs(data);
+      setCurrentView('specs');
+    } catch (err) {
+      await handleServiceError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResaleSearch = async (model: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await analyzeResale(model);
+      setResaleReport(data);
+      setCurrentView('resale');
+    } catch (err) {
+      await handleServiceError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFipeSearch = async (model: string, year: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getFipeReport(model, year);
+      setFipeReport(data);
+      setCurrentView('fipe');
+    } catch (err) {
+      await handleServiceError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChatSubmit = async (message: string) => {
+    setLoading(true);
+    setError(null);
+    setLastUserMessage(message);
+    try {
+      const response = await getMotivationalMessage(message);
+      setChatResponse(response);
+      setHasInteractedWithChat(true);
+      setCurrentView('conversation');
+    } catch (err) {
+      await handleServiceError(err);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      <Hero onSearch={handleSearch} isLoading={loading} />
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans relative">
+      <Hero 
+        onSearch={handleSearch} 
+        onCompareSearch={handleComparisonSearch}
+        onInsuranceSearch={handleInsuranceSearch}
+        onSpecsSearch={handleSpecsSearch}
+        onResaleSearch={handleResaleSearch}
+        onFipeSearch={handleFipeSearch}
+        onChatSubmit={handleChatSubmit}
+        isLoading={loading} 
+        currentView={currentView}
+        onViewChange={handleViewChange}
+        onBack={handleBack}
+        canGoBack={history.length > 0}
+        needsApiKey={needsApiKey}
+        onSelectKey={handleSelectKey}
+      />
 
-      <main className="flex-grow container mx-auto px-4 -mt-10 md:-mt-16 relative z-10 pb-16">
-        {error && (
-          <div className="max-w-4xl mx-auto bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl mb-8 shadow-sm">
-            <p className="font-medium">Ocorreu um erro</p>
-            <p className="text-sm">{error}</p>
-          </div>
+      <main className={`flex-grow container mx-auto px-4 relative z-10 pb-16 ${currentView === 'home' ? 'mt-0' : '-mt-10 md:-mt-16'}`}>
+        
+        {needsApiKey && currentView !== 'home' && (
+           <div className="max-w-4xl mx-auto mb-8 animate-fade-in-up">
+              <div className="bg-slate-900 text-white rounded-[2rem] shadow-2xl p-8 flex flex-col md:flex-row items-center gap-8">
+                <div className="bg-blue-600 p-6 rounded-3xl">
+                  <Key className="w-10 h-10" />
+                </div>
+                <div className="flex-1 text-center md:text-left">
+                  <h3 className="font-black text-2xl mb-2">Ativar IA Gratuitamente</h3>
+                  <p className="text-slate-400 text-sm">Conecte sua conta Google para habilitar o Gemini Flash e realizar buscas em tempo real.</p>
+                </div>
+                <button onClick={handleSelectKey} className="bg-white text-slate-900 px-10 py-5 rounded-2xl font-black uppercase text-sm hover:bg-blue-50">Conectar</button>
+              </div>
+           </div>
         )}
 
-        {report && (
+        {error && !needsApiKey && (
+            <div className="max-w-4xl mx-auto bg-red-50 border border-red-100 text-red-700 px-8 py-5 rounded-2xl mb-8 flex items-center gap-4">
+              <AlertCircle className="w-6 h-6 flex-shrink-0" />
+              <p className="text-sm font-medium">{error}</p>
+            </div>
+        )}
+
+        {currentView === 'calculator' && report && (
           <div className="max-w-6xl mx-auto animate-fade-in-up">
-            
-            {/* Header Card */}
-            <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-8 flex flex-col items-center text-center relative overflow-hidden border-t-4 border-blue-600">
-               <h2 className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-800 text-xs font-bold uppercase tracking-wider mb-4 border border-blue-100">
-                 Relatório de Custos
-               </h2>
-               
-               <h1 className="text-2xl md:text-4xl font-extrabold text-slate-800 mb-4 leading-tight">
-                 {report.carName}
-               </h1>
-               
-               <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-slate-500 text-sm font-medium">
-                  <span className="flex items-center">
-                    <CheckCircle2 className="w-4 h-4 mr-1.5 text-emerald-500"/> 
-                    Cálculo Média Brasil
-                  </span>
-                  <span className="hidden md:inline text-slate-300">•</span>
-                  <span className="flex items-center">
-                    <Clock className="w-4 h-4 mr-1.5 text-blue-500"/> 
-                    Atualizado recentemente
-                  </span>
-               </div>
+            <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 flex flex-col items-center text-center border-t-4 border-blue-600">
+              <h1 className="text-3xl md:text-4xl font-extrabold text-slate-800 mb-2">{report.carName}</h1>
+              <div className="flex gap-4 text-slate-500 text-xs font-bold uppercase tracking-widest">
+                  <span className="flex items-center gap-1"><CheckCircle2 className="w-4 h-4 text-emerald-500"/> Busca Ativa</span>
+                  <span className="flex items-center gap-1"><Clock className="w-4 h-4 text-blue-500"/> Atualizado</span>
+              </div>
             </div>
-
             <CostGrid data={report} />
-            
+            <CommonIssues issues={report.analysis.commonIssues} />
             <AnalysisSection data={report} />
-            
-            <div className="sticky bottom-6 z-50">
-               <CTA text={report.ctaText} />
-            </div>
-
-            <p className="text-center text-xs text-slate-400 mt-12 max-w-2xl mx-auto">
-              * Os valores apresentados são estimativas médias de mercado para peças de boa qualidade (primeira linha) e mão de obra convencional. Podem variar conforme região, estado de conservação do veículo e oficina escolhida. Este aplicativo utiliza Inteligência Artificial para projeções e não substitui orçamento técnico.
-            </p>
+            <CTA text={report.ctaText} />
           </div>
         )}
+
+        {currentView === 'comparison' && <MarketComparison recommendations={recommendations} hasSearched={hasComparisonSearched} />}
+        
+        {currentView === 'insurance' && (
+          loading ? (
+            <div className="max-w-4xl mx-auto py-24 text-center animate-fade-in-up">
+              <div className="relative inline-block mb-10">
+                 <div className="w-24 h-24 border-[6px] border-slate-100 border-t-indigo-600 rounded-full animate-spin mx-auto"></div>
+                 <Shield className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-slate-300" />
+              </div>
+              <h3 className="text-3xl font-black text-slate-900 mb-6 tracking-tight">Processando Cotação Inteligente</h3>
+              <div className="flex flex-col gap-3">
+                 <p className="text-indigo-600 font-black text-xs uppercase tracking-widest animate-pulse">Cruzando dados de sinistralidade e perfil...</p>
+                 <div className="flex justify-center gap-6 mt-4">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Tabelas Seguralta</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Índice Roubo/Furto</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Bônus Regional</span>
+                 </div>
+                 <p className="text-slate-400 text-xs font-medium mt-6 max-w-sm mx-auto">Nossa IA está analisando mais de 15 variáveis para estimar o melhor custo-benefício para seu veículo.</p>
+              </div>
+            </div>
+          ) : (
+            insuranceQuote && <InsuranceEstimator quote={insuranceQuote} />
+          )
+        )}
+
+        {currentView === 'specs' && techSpecs && <TechnicalSpecs specs={techSpecs} />}
+        {currentView === 'resale' && resaleReport && <ResaleAnalysis report={resaleReport} />}
+        {currentView === 'fipe' && fipeReport && <FipeTable data={fipeReport} />}
+        {currentView === 'conversation' && <MotivationChat userMessage={lastUserMessage} response={chatResponse} hasInteracted={hasInteractedWithChat} />}
+        {currentView === 'blog' && <BlogPage />}
+        {currentView === 'affiliate' && <AffiliatePage />}
       </main>
 
-      <footer className="bg-slate-900 text-slate-400 py-10 text-center text-sm border-t border-slate-800">
+      <FloatingCTA />
+
+      <footer className="bg-slate-900 text-slate-300 py-16 border-t border-white/10">
         <div className="container mx-auto px-4">
-           <div className="flex justify-center items-center gap-2 mb-4 opacity-75">
-             <Car className="w-6 h-6 text-slate-500" />
-             <div className="font-bold text-lg text-white">Calculadora Automotiva</div>
-           </div>
-           <p className="mb-2">&copy; {new Date().getFullYear()} Todos os direitos reservados.</p>
-           <p className="text-xs text-slate-500">Política de Privacidade | Termos de Uso</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center md:text-left">
+            
+            {/* Contact Info */}
+            <div className="space-y-6">
+              <h4 className="text-xs font-black uppercase tracking-[0.2em] text-blue-400">Atendimento</h4>
+              <div className="space-y-4">
+                <div className="flex items-center justify-center md:justify-start gap-3">
+                  <div className="bg-blue-500/10 p-2 rounded-lg"><MapPin className="w-4 h-4 text-blue-500" /></div>
+                  <span className="text-sm font-medium">Av. João Pinheiro 3202 - Poços de Caldas - MG</span>
+                </div>
+                <a href="https://wa.me/5535997170922" target="_blank" className="flex items-center justify-center md:justify-start gap-3 hover:text-emerald-400 transition-colors">
+                  <div className="bg-emerald-500/10 p-2 rounded-lg"><Phone className="w-4 h-4 text-emerald-500" /></div>
+                  <span className="text-sm font-bold">(35) 99717-0922</span>
+                </a>
+                <div className="flex items-center justify-center md:justify-start gap-3">
+                  <div className="bg-slate-700/50 p-2 rounded-lg"><Mail className="w-4 h-4 text-slate-400" /></div>
+                  <span className="text-sm font-medium">contato@vistoriadoronline.com.br</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Social Media */}
+            <div className="space-y-6">
+              <h4 className="text-xs font-black uppercase tracking-[0.2em] text-pink-500">Redes Sociais</h4>
+              <div className="flex justify-center md:justify-start gap-4">
+                <a href="https://www.instagram.com/dodonaves/" target="_blank" className="bg-white/5 p-4 rounded-2xl border border-white/10 hover:bg-pink-600 hover:text-white transition-all transform hover:-translate-y-1">
+                  <Instagram className="w-6 h-6" />
+                </a>
+                <a href="https://www.youtube.com/@Dodonaves" target="_blank" className="bg-white/5 p-4 rounded-2xl border border-white/10 hover:bg-red-600 hover:text-white transition-all transform hover:-translate-y-1">
+                  <Youtube className="w-6 h-6" />
+                </a>
+              </div>
+              <p className="text-[10px] text-slate-500 leading-relaxed max-w-[240px] mx-auto md:mx-0">
+                Siga-nos para receber as últimas novidades e dicas do mercado automotivo diretamente no seu feed.
+              </p>
+            </div>
+
+            {/* Logo/CNPJ */}
+            <div className="flex flex-col items-center md:items-end justify-center gap-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-emerald-500 rounded-lg text-white"><Car className="w-5 h-5" /></div>
+                <div className="text-left leading-none">
+                  <span className="text-sm font-black uppercase tracking-tighter">Vistoriador</span>
+                  <br />
+                  <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Online</span>
+                </div>
+              </div>
+              <div className="text-[10px] text-slate-500 text-center md:text-right">
+                <p>CNPJ: 52.902.617/0001-04</p>
+                <p className="mt-1">&copy; {new Date().getFullYear()} Todos os direitos reservados.</p>
+              </div>
+              <a href="https://vistoriadoronline.com.br" target="_blank" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white underline underline-offset-4">
+                vistoriadoronline.com.br
+              </a>
+            </div>
+          </div>
         </div>
       </footer>
     </div>

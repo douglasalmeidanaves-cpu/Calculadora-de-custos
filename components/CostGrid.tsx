@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { VehicleReport } from '../types';
 import { 
@@ -36,6 +37,7 @@ const CostGrid: React.FC<CostGridProps> = ({ data }) => {
     { icon: Zap, title: "Bateria", ...costs.battery, color: "text-yellow-600", bg: "bg-yellow-100" },
     { icon: Flame, title: "Velas (Jogo)", ...costs.plugs, color: "text-orange-600", bg: "bg-orange-100" },
     { icon: Crosshair, title: "Alinhamento + Balanc.", ...costs.alignment, color: "text-emerald-600", bg: "bg-emerald-100" },
+    // Highlighted items
     { icon: CalendarCheck, title: "Revisão Anual Média", ...costs.annualService, color: "text-indigo-600", bg: "bg-indigo-100", highlight: true },
     { icon: TrendingUp, title: "Custo por 10.000km", ...costs.costPer10k, color: "text-cyan-600", bg: "bg-cyan-100", highlight: true },
   ];
@@ -44,33 +46,42 @@ const CostGrid: React.FC<CostGridProps> = ({ data }) => {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
       {items.map((item, index) => {
         const Icon = item.icon;
-        // Fix TS error: Property 'highlight' does not exist on some union members.
         const isHighlighted = (item as any).highlight;
         
         return (
           <div 
             key={index} 
             className={`
-              relative p-4 rounded-xl border transition-all duration-300 hover:shadow-lg
-              ${isHighlighted ? 'bg-white border-blue-200 shadow-md col-span-1 md:col-span-1 lg:col-span-1 ring-1 ring-blue-100' : 'bg-white border-slate-100'}
+              relative p-5 rounded-2xl border hover-lift
+              ${isHighlighted 
+                ? 'bg-gradient-to-br from-indigo-50 to-blue-50 border-indigo-200 shadow-md ring-1 ring-indigo-100 lg:scale-105 z-10' 
+                : 'bg-white border-slate-100 hover:border-slate-200'
+              }
             `}
           >
-            <div className="flex items-start justify-between mb-3">
-              <div className={`p-2 rounded-lg ${item.bg}`}>
+            <div className="flex items-start justify-between mb-4">
+              <div className={`p-2.5 rounded-xl ${item.bg}`}>
                 <Icon className={`w-5 h-5 ${item.color}`} />
               </div>
+              {isHighlighted && (
+                <span className="text-[10px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full uppercase tracking-wide">
+                  Importante
+                </span>
+              )}
             </div>
             
-            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+            <h3 className={`text-xs font-bold uppercase tracking-wider mb-1 ${isHighlighted ? 'text-indigo-900/60' : 'text-slate-400'}`}>
               {item.title}
             </h3>
             
-            <div className="flex items-baseline gap-2">
-              <span className="text-xl font-bold text-slate-800">{item.value}</span>
+            <div className="flex items-baseline gap-2 mt-auto">
+              <span className={`text-2xl font-black ${isHighlighted ? 'text-indigo-900' : 'text-slate-800'}`}>
+                {item.value}
+              </span>
             </div>
 
             {item.details && (
-              <span className="inline-block mt-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide rounded bg-slate-100 text-slate-600">
+              <span className="inline-block mt-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide rounded bg-slate-100 text-slate-600 w-fit">
                 {item.details}
               </span>
             )}
