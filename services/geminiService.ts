@@ -2,32 +2,13 @@
 import { VehicleReport, CarRecommendation, InsuranceQuote, BlogPost, TechSpecs, ResaleReport, GroundingSource, FipeReport } from "../types";
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 
-declare global {
-  interface AIStudio {
-    hasSelectedApiKey: () => Promise<boolean>;
-    openSelectKey: () => Promise<void>;
-  }
-
-  interface Window {
-    aistudio?: AIStudio;
-  }
-}
-
-export const ensureApiKey = async () => {
-  if (typeof window.aistudio !== 'undefined' && window.aistudio) {
-    const hasKey = await window.aistudio.hasSelectedApiKey();
-    if (!hasKey) {
-      await window.aistudio.openSelectKey();
-    }
-  }
-};
-
 const createAiClient = () => {
+  // Acessa a chave injetada pelo define do vite.config.ts
   const apiKey = process.env.API_KEY;
   if (!apiKey) {
-    throw new Error("API_KEY_MISSING");
+    console.warn("API_KEY não encontrada. Verifique as variáveis de ambiente na Vercel.");
   }
-  return new GoogleGenAI({ apiKey });
+  return new GoogleGenAI({ apiKey: apiKey as string });
 };
 
 const SYSTEM_INSTRUCTION = `Você é um Especialista Automotivo Sênior com foco no mercado brasileiro.
@@ -64,16 +45,13 @@ const handleApiCall = async (fn: () => Promise<any>) => {
   try {
     return await fn();
   } catch (error: any) {
-    if (error.message?.includes("Requested entity was not found") || error.message?.includes("404")) {
-      throw new Error("API_KEY_INVALID");
-    }
+    console.error("Gemini API Error:", error);
     throw error;
   }
 };
 
 export const analyzeVehicle = async (userInput: string): Promise<VehicleReport> => {
   return handleApiCall(async () => {
-    await ensureApiKey();
     const ai = createAiClient();
     const response = await ai.models.generateContent({
       model: MAIN_MODEL,
@@ -92,7 +70,6 @@ export const analyzeVehicle = async (userInput: string): Promise<VehicleReport> 
 
 export const calculateInsurance = async (model: string, year: number): Promise<InsuranceQuote> => {
   return handleApiCall(async () => {
-    await ensureApiKey();
     const ai = createAiClient();
     const response = await ai.models.generateContent({
       model: MAIN_MODEL,
@@ -111,7 +88,6 @@ export const calculateInsurance = async (model: string, year: number): Promise<I
 
 export const getRecommendations = async (budget: number, category: string): Promise<CarRecommendation[]> => {
   return handleApiCall(async () => {
-    await ensureApiKey();
     const ai = createAiClient();
     const response = await ai.models.generateContent({
       model: MAIN_MODEL,
@@ -130,7 +106,6 @@ export const getRecommendations = async (budget: number, category: string): Prom
 
 export const getCarSpecs = async (model: string): Promise<TechSpecs> => {
   return handleApiCall(async () => {
-    await ensureApiKey();
     const ai = createAiClient();
     const response = await ai.models.generateContent({
       model: MAIN_MODEL,
@@ -149,7 +124,6 @@ export const getCarSpecs = async (model: string): Promise<TechSpecs> => {
 
 export const analyzeResale = async (modelInput: string): Promise<ResaleReport> => {
   return handleApiCall(async () => {
-    await ensureApiKey();
     const ai = createAiClient();
     const response = await ai.models.generateContent({
       model: MAIN_MODEL,
@@ -168,7 +142,6 @@ export const analyzeResale = async (modelInput: string): Promise<ResaleReport> =
 
 export const getFipeReport = async (model: string, year: number): Promise<FipeReport> => {
   return handleApiCall(async () => {
-    await ensureApiKey();
     const ai = createAiClient();
     const response = await ai.models.generateContent({
       model: MAIN_MODEL,
@@ -187,7 +160,6 @@ export const getFipeReport = async (model: string, year: number): Promise<FipeRe
 
 export const getBlogPosts = async (): Promise<BlogPost[]> => {
   return handleApiCall(async () => {
-    await ensureApiKey();
     const ai = createAiClient();
     const response = await ai.models.generateContent({
       model: MAIN_MODEL,
@@ -204,7 +176,6 @@ export const getBlogPosts = async (): Promise<BlogPost[]> => {
 
 export const getMotivationalMessage = async (msg: string): Promise<string> => {
   return handleApiCall(async () => {
-    await ensureApiKey();
     const ai = createAiClient();
     const response = await ai.models.generateContent({
       model: MAIN_MODEL,

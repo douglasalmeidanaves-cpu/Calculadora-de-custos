@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Calculator, TrendingUp, DollarSign, Car, Shield, MessageCircleHeart, Home, ArrowRight, ArrowLeft, Users, Check, ChevronLeft, Newspaper, Menu, X, FileText, Repeat, Key, Zap, Info, Sparkles, Loader2 } from 'lucide-react';
+import { Search, Calculator, TrendingUp, DollarSign, Car, Shield, MessageCircleHeart, Home, ArrowRight, ArrowLeft, Users, Check, ChevronLeft, Newspaper, Menu, X, FileText, Repeat, Zap, Info, Sparkles, Loader2 } from 'lucide-react';
 import { AppView } from '../types';
 import TestimonialsMarquee from './TestimonialsMarquee';
 import VideoResources from './VideoResources';
@@ -18,8 +18,6 @@ interface HeroProps {
   onViewChange: (view: AppView) => void;
   onBack: () => void;
   canGoBack: boolean;
-  needsApiKey: boolean;
-  onSelectKey: () => void;
 }
 
 const Hero: React.FC<HeroProps> = ({ 
@@ -34,9 +32,7 @@ const Hero: React.FC<HeroProps> = ({
   currentView, 
   onViewChange, 
   onBack, 
-  canGoBack,
-  needsApiKey,
-  onSelectKey
+  canGoBack
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [budget, setBudget] = useState('');
@@ -139,19 +135,12 @@ const Hero: React.FC<HeroProps> = ({
                 </div>
               </div>
 
-              {/* Action Buttons (IA & Menu) */}
+              {/* Action Buttons (Menu) */}
               <div className="flex items-center gap-2 md:gap-3">
-                <button 
-                  onClick={onSelectKey}
-                  className={`flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-xl transition-all shadow-lg border hover:brightness-110 active:scale-95 ${
-                    needsApiKey 
-                    ? 'bg-blue-600 text-white border-blue-400 animate-pulse-subtle' 
-                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                  }`}
-                >
-                  {needsApiKey ? <Key className="w-3.5 h-3.5" /> : <Zap className="w-3.5 h-3.5" />}
-                  <span className="text-[9px] font-black uppercase hidden sm:inline">{needsApiKey ? 'Ativar IA' : 'IA Ativa'}</span>
-                </button>
+                <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 md:px-4 py-1.5 md:py-2 rounded-xl">
+                  <Zap className="w-3.5 h-3.5" />
+                  <span className="text-[9px] font-black uppercase hidden sm:inline">IA Ativa</span>
+                </div>
                 
                 <button 
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
@@ -185,7 +174,7 @@ const Hero: React.FC<HeroProps> = ({
           </div>
         </div>
 
-        {/* Mobile Sidebar Style Menu (Optional detailed view) */}
+        {/* Mobile Sidebar Style Menu */}
         <div className={`lg:hidden absolute top-full left-0 w-full bg-slate-950 border-b border-slate-800 shadow-2xl transition-all duration-300 overflow-hidden ${isMobileMenuOpen ? 'max-h-[90vh] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}>
            <div className="flex flex-col p-6 gap-3 overflow-y-auto max-h-[80vh]">
               {NAV_ITEMS.map((item) => (
@@ -212,7 +201,7 @@ const Hero: React.FC<HeroProps> = ({
         </div>
       </div>
 
-      {/* Main Content Area - Adjusted margin top */}
+      {/* Main Content Area */}
       <div className="container mx-auto px-4 relative z-10 mt-28 md:mt-32 text-center">
         {currentView === 'home' && (
           <div className="flex flex-col items-center justify-center min-h-[55vh] animate-fade-in-up">
@@ -243,12 +232,10 @@ const Hero: React.FC<HeroProps> = ({
               </div>
             </div>
 
-            {/* Testimonials Marquee */}
             <div className="w-full mb-16 animate-fade-in-up stagger-1">
               <TestimonialsMarquee />
             </div>
 
-            {/* Home Grid (Quick Access) */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-7xl animate-fade-in-up stagger-2">
                {NAV_ITEMS.filter(item => ['calculator', 'fipe', 'resale', 'specs'].includes(item.id)).map((item) => (
                   <button 

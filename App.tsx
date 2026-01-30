@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { analyzeVehicle, getRecommendations, calculateInsurance, getMotivationalMessage, getCarSpecs, analyzeResale, getFipeReport } from './services/geminiService';
 import { VehicleReport, CarRecommendation, InsuranceQuote, AppView, TechSpecs, ResaleReport, FipeReport } from './types';
 import Hero from './components/Hero';
@@ -16,13 +16,11 @@ import FloatingCTA from './components/FloatingCTA';
 import TechnicalSpecs from './components/TechnicalSpecs';
 import ResaleAnalysis from './components/ResaleAnalysis';
 import FipeTable from './components/FipeTable';
-// Fixed missing Car icon import
-import { CheckCircle2, Clock, Key, AlertCircle, Shield, MapPin, Phone, Instagram, Youtube, Mail, Car } from 'lucide-react';
+import { CheckCircle2, Clock, AlertCircle, Shield, MapPin, Phone, Instagram, Youtube, Mail, Car } from 'lucide-react';
 
 const App: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [needsApiKey, setNeedsApiKey] = useState(false);
   
   const [currentView, setCurrentView] = useState<AppView>('home');
   const [history, setHistory] = useState<AppView[]>([]);
@@ -37,34 +35,9 @@ const App: React.FC = () => {
   const [chatResponse, setChatResponse] = useState('');
   const [hasInteractedWithChat, setHasInteractedWithChat] = useState(false);
 
-  useEffect(() => {
-    const checkKey = async () => {
-      if (typeof window.aistudio !== 'undefined' && window.aistudio) {
-        const hasKey = await window.aistudio.hasSelectedApiKey();
-        setNeedsApiKey(!hasKey);
-      }
-    };
-    checkKey();
-  }, []);
-
-  const handleServiceError = async (err: any) => {
-    if (err.message === "API_KEY_MISSING" || err.message === "API_KEY_INVALID") {
-      setNeedsApiKey(true);
-      setError("Conexão com Inteligência Artificial pendente.");
-      if (typeof window.aistudio !== 'undefined' && window.aistudio) {
-        await window.aistudio.openSelectKey();
-      }
-    } else {
-      setError("Ops! Erro na pesquisa. Tente novamente.");
-    }
-  };
-
-  const handleSelectKey = async () => {
-    if (typeof window.aistudio !== 'undefined' && window.aistudio) {
-      await window.aistudio.openSelectKey();
-      setNeedsApiKey(false);
-      setError(null);
-    }
+  const handleServiceError = (err: any) => {
+    setError("Ops! Erro na conexão com o sistema de Inteligência. Tente novamente em alguns segundos.");
+    console.error(err);
   };
 
   const handleViewChange = (newView: AppView) => {
@@ -90,7 +63,7 @@ const App: React.FC = () => {
       setReport(data);
       setCurrentView('calculator');
     } catch (err) {
-      await handleServiceError(err);
+      handleServiceError(err);
     } finally {
       setLoading(false);
     }
@@ -105,7 +78,7 @@ const App: React.FC = () => {
       setHasComparisonSearched(true);
       setCurrentView('comparison');
     } catch (err) {
-      await handleServiceError(err);
+      handleServiceError(err);
     } finally {
       setLoading(false);
     }
@@ -119,7 +92,7 @@ const App: React.FC = () => {
       setInsuranceQuote(data);
       setCurrentView('insurance');
     } catch (err) {
-      await handleServiceError(err);
+      handleServiceError(err);
     } finally {
       setLoading(false);
     }
@@ -133,7 +106,7 @@ const App: React.FC = () => {
       setTechSpecs(data);
       setCurrentView('specs');
     } catch (err) {
-      await handleServiceError(err);
+      handleServiceError(err);
     } finally {
       setLoading(false);
     }
@@ -147,7 +120,7 @@ const App: React.FC = () => {
       setResaleReport(data);
       setCurrentView('resale');
     } catch (err) {
-      await handleServiceError(err);
+      handleServiceError(err);
     } finally {
       setLoading(false);
     }
@@ -161,7 +134,7 @@ const App: React.FC = () => {
       setFipeReport(data);
       setCurrentView('fipe');
     } catch (err) {
-      await handleServiceError(err);
+      handleServiceError(err);
     } finally {
       setLoading(false);
     }
@@ -177,7 +150,7 @@ const App: React.FC = () => {
       setHasInteractedWithChat(true);
       setCurrentView('conversation');
     } catch (err) {
-      await handleServiceError(err);
+      handleServiceError(err);
     } finally {
       setLoading(false);
     }
@@ -198,28 +171,11 @@ const App: React.FC = () => {
         onViewChange={handleViewChange}
         onBack={handleBack}
         canGoBack={history.length > 0}
-        needsApiKey={needsApiKey}
-        onSelectKey={handleSelectKey}
       />
 
       <main className={`flex-grow container mx-auto px-4 relative z-10 pb-16 ${currentView === 'home' ? 'mt-0' : '-mt-10 md:-mt-16'}`}>
         
-        {needsApiKey && currentView !== 'home' && (
-           <div className="max-w-4xl mx-auto mb-8 animate-fade-in-up">
-              <div className="bg-slate-900 text-white rounded-[2rem] shadow-2xl p-8 flex flex-col md:flex-row items-center gap-8">
-                <div className="bg-blue-600 p-6 rounded-3xl">
-                  <Key className="w-10 h-10" />
-                </div>
-                <div className="flex-1 text-center md:text-left">
-                  <h3 className="font-black text-2xl mb-2">Ativar IA Gratuitamente</h3>
-                  <p className="text-slate-400 text-sm">Conecte sua conta Google para habilitar o Gemini Flash e realizar buscas em tempo real.</p>
-                </div>
-                <button onClick={handleSelectKey} className="bg-white text-slate-900 px-10 py-5 rounded-2xl font-black uppercase text-sm hover:bg-blue-50">Conectar</button>
-              </div>
-           </div>
-        )}
-
-        {error && !needsApiKey && (
+        {error && (
             <div className="max-w-4xl mx-auto bg-red-50 border border-red-100 text-red-700 px-8 py-5 rounded-2xl mb-8 flex items-center gap-4">
               <AlertCircle className="w-6 h-6 flex-shrink-0" />
               <p className="text-sm font-medium">{error}</p>
@@ -281,7 +237,6 @@ const App: React.FC = () => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center md:text-left">
             
-            {/* Contact Info */}
             <div className="space-y-6">
               <h4 className="text-xs font-black uppercase tracking-[0.2em] text-blue-400">Atendimento</h4>
               <div className="space-y-4">
@@ -300,7 +255,6 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Social Media */}
             <div className="space-y-6">
               <h4 className="text-xs font-black uppercase tracking-[0.2em] text-pink-500">Redes Sociais</h4>
               <div className="flex justify-center md:justify-start gap-4">
@@ -316,7 +270,6 @@ const App: React.FC = () => {
               </p>
             </div>
 
-            {/* Logo/CNPJ */}
             <div className="flex flex-col items-center md:items-end justify-center gap-4">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-emerald-500 rounded-lg text-white"><Car className="w-5 h-5" /></div>
